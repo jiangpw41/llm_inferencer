@@ -80,7 +80,7 @@ class Inferencer():
             raise Exception( "Remote mode need no model path")
         model_name = self.inference_config["model_name"]
         if model_name not in self.model_config["local"]:
-            raise Exception( f"Local model {model_name} not exists")
+            raise Exception( f"Local model {model_name} not in list")
         return self.model_config["local"][model_name]
     
     def parallel( self, inference_config, inferencer):

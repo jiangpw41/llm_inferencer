@@ -11,7 +11,7 @@ def ins_inferencer():
         "local_or_remote" : "local",
         "server_or_reader" : "server",
         "model_name" : "ChatGLM3-6B",
-        "gpu_list_str" : "0,3,4,5",
+        "gpu_list" : "0,3,4,5",
         "local_engine": "vllm"
     }
     inferencer = Inferencer( kwargs )

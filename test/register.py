@@ -25,7 +25,3 @@ reg.add_remote_model( "NL2GQL", "sk-t4Mv9tJa0ftMCcKqKMAlqJmq3x5Da83Pk4U4Jq2M98C5
                                 'llama-3-70b'
                                 ])
 reg.list_models()
-
-"""
-inference_start --local_or_remote local --server_or_reader server --model_name ChatGLM3-6B --gpu_list 0,2,3,4,5 --local_engine vllm
-"""
