@@ -10,7 +10,7 @@ os.chdir(os.path.normpath(os.path.join(os.path.abspath(__file__), os.pardir)))
  
 setuptools.setup(
     name="llm_inferencer", # 库名，需要在pypi中唯一
-    version="0.0.20",                          # 版本号
+    version="0.0.21",                          # 版本号
     author="Peiwen Jiang (Wayne)",            # 作者
     author_email="wayne_roaming@163.com",     # 作者邮箱
     description="A collection of commonly used code", # 简介

@@ -10,7 +10,7 @@ from wayne_utils import get_ROOT_PATH, load_data, save_data
 
 _ROOT_PATH = get_ROOT_PATH( 1, __file__)
 # sys.path.insert( 0, _ROOT_PATH)
-'''
+
 from .local.reader.vllm_predict import vLLMPredict
 from .local.server.single_model_server import start_single_model_server
 from .remote.api_predict import OpenAIPredict
@@ -18,7 +18,7 @@ from .remote.api_predict import OpenAIPredict
 from local.reader.vllm_predict import vLLMPredict
 from local.server.single_model_server import start_single_model_server
 from remote.api_predict import OpenAIPredict
-
+'''
 def get_interval_pair( prompt, part_id, part_num ):
     total_len = len(prompt)
     part_len = total_len // part_num
