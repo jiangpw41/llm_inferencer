@@ -10,7 +10,7 @@ os.chdir(os.path.normpath(os.path.join(os.path.abspath(__file__), os.pardir)))
  
 setuptools.setup(
     name="llm_inferencer", # 库名，需要在pypi中唯一
-    version="0.0.17",                          # 版本号
+    version="0.0.20",                          # 版本号
     author="Peiwen Jiang (Wayne)",            # 作者
     author_email="wayne_roaming@163.com",     # 作者邮箱
     description="A collection of commonly used code", # 简介
@@ -34,6 +34,7 @@ setuptools.setup(
     install_requires=[                      # 该库需要的依赖库
         'flask',
         'wayne_utils',
+        "openai",
         #'Django >= 1.11, != 1.11.1, <= 2',
     ],
     python_requires='>=3.6',

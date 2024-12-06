@@ -10,9 +10,15 @@ from wayne_utils import get_ROOT_PATH, load_data, save_data
 
 _ROOT_PATH = get_ROOT_PATH( 1, __file__)
 # sys.path.insert( 0, _ROOT_PATH)
+'''
 from .local.reader.vllm_predict import vLLMPredict
 from .local.server.single_model_server import start_single_model_server
- 
+from .remote.api_predict import OpenAIPredict
+'''
+from local.reader.vllm_predict import vLLMPredict
+from local.server.single_model_server import start_single_model_server
+from remote.api_predict import OpenAIPredict
+
 def get_interval_pair( prompt, part_id, part_num ):
     total_len = len(prompt)
     part_len = total_len // part_num
@@ -54,7 +60,6 @@ class Inferencer():
         self.inference_config = kwargs
         # Model config
         model_config_path = os.path.join(_ROOT_PATH, "model_list.yaml")
-        
         self.model_config = load_data( model_config_path, "yaml")
         # Check intermediate results path
         self.temp_path = os.path.join( _ROOT_PATH, "temp")
@@ -74,14 +79,6 @@ class Inferencer():
         self.flask_server_list_url = []
         # 启动
         self.start_service()
-
-    def get_local_model_path(self):
-        if self.inference_config["local_or_remote"] == "remote":
-            raise Exception( "Remote mode need no model path")
-        model_name = self.inference_config["model_name"]
-        if model_name not in self.model_config["local"]:
-            raise Exception( f"Local model {model_name} not in list")
-        return self.model_config["local"][model_name]
     
     def parallel( self, inference_config, inferencer):
         "Multi-processor"
@@ -102,6 +99,15 @@ class Inferencer():
         shutil.copy( self.merge_path, self.predict_list_to_path) 
         print("Model inference finished！")
 
+    ######################################################本地运行：server or reader###########################################################
+    def get_local_model_path(self):
+        if self.inference_config["local_or_remote"] == "remote":
+            raise Exception( "Remote mode need no model path")
+        model_name = self.inference_config["model_name"]
+        if model_name not in self.model_config["local"]:
+            raise Exception( f"Local model {model_name} not in list")
+        return self.model_config["local"][model_name]
+    
     def run_servers_on_multiple_gpus( self, inference_config, gpu_list):
         """
         启动多个 Flask 服务器，每个服务器运行在不同的 GPU 上
@@ -156,9 +162,19 @@ class Inferencer():
             "Start a server and return the api"
             self.run_servers_on_multiple_gpus( inference_config, self.gpu_list )
 
+    ######################################################远程运行：server or reader###########################################################
     def remote_inference( self ):
-        Inference_offline_api( model_path, prompt_list_from_path, file_output_path, config_data, sample_little=sample_little )
-
+        inference_config = {
+            'API': self.model_config["remote"][ self.inference_config["apikey_name"] ],
+            "model": self.inference_config["model_name"],
+            "file_output_path": self.temp_path,
+        }
+        if self.inference_config["server_or_reader"] == "reader":
+            "Read file and run model"
+            self.parallel( inference_config, OpenAIPredict)
+        elif self.inference_config["server_or_reader"] == "server":
+            raise Exception("API server not available yet")
+    
     def start_service(self):
         if self.inference_config["local_or_remote"] == "local":
             self.local_inference()
@@ -175,18 +191,18 @@ def main():
     parser.add_argument('--gpu_list', type=str, required=False, help='可用GPU列表，非空表示本地，否则用远程')
     parser.add_argument('--sample_little', type=str, required=False, help='小样本情况')
     parser.add_argument('--local_engine', type=str, required=False, help='本地模型使用的推理引擎，可以为vllm, ollama等')
+    parser.add_argument('--apikey_name', type=str, required=False, help='远程模型的apikey的名称')
     args = parser.parse_args()
     # 获取参数值
     local_or_remote = args.local_or_remote
     server_or_reader = args.server_or_reader
-
     prompt_list_from_path = args.prompt_list_from_path if args.prompt_list_from_path else None
     predict_list_to_path = args.predict_list_to_path if args.predict_list_to_path else None
-
     model_name = args.model_name
     gpu_list = args.gpu_list if args.gpu_list else None
     sample_little = args.sample_little if args.sample_little else None
     local_engine = args.local_engine if args.local_engine else None
+    apikey_name = args.apikey_name if args.apikey_name else None
 
     kwargs = {}
     kwargs["local_or_remote"] = local_or_remote
@@ -194,6 +210,7 @@ def main():
     kwargs["model_name"] = model_name
     kwargs["gpu_list"] = gpu_list
     kwargs["local_engine"] = local_engine
+    kwargs["apikey_name"] = apikey_name
     if prompt_list_from_path != None:
         kwargs["prompt_list_from_path"] = prompt_list_from_path
         kwargs["predict_list_to_path"] = predict_list_to_path
@@ -202,15 +219,16 @@ def main():
 
 if __name__=="__main__":
     local_or_remote = "local"
-    server_or_reader = "server"
+    server_or_reader = "reader"
     model_name = "ChatGLM3-6B"
-    gpu_list = "0,2,3,4,5"
-    # prompt_list_from_path = "/home/jiangpeiwen2/jiangpeiwen2/projects/TKGT/code_example/Hybird_RAG/temp/cpl/cpl_data_try_cell_all_prompt_list.pickle"
-    # predict_list_to_path = "/home/jiangpeiwen2/jiangpeiwen2/cpl_data_cell_all_predict_list.pickle"
-    prompt_list_from_path = None
-    predict_list_to_path = None
-    sample_little = None
-    local_engine = "vllm"
+    gpu_list = "0,1,2,5"
+    prompt_list_from_path = "/home/jiangpeiwen2/jiangpeiwen2/TKGT/test/LiveSum/v1/prompt_list_only.pickle"
+    predict_list_to_path = "/home/jiangpeiwen2/jiangpeiwen2/TKGT/test/LiveSum/v1/predict_list_only.pickle"
+    '''prompt_list_from_path = None
+    predict_list_to_path = None'''
+    sample_little = 6
+    local_engine = "vllm"   # "vllm"
+    apikey_name = "NL2GQL"
     
     kwargs = {}
     kwargs["local_or_remote"] = local_or_remote
@@ -218,6 +236,7 @@ if __name__=="__main__":
     kwargs["model_name"] = model_name
     kwargs["gpu_list"] = gpu_list
     kwargs["local_engine"] = local_engine
+    kwargs["apikey_name"] = apikey_name
     if prompt_list_from_path != None:
         kwargs["prompt_list_from_path"] = prompt_list_from_path
         kwargs["predict_list_to_path"] = predict_list_to_path

@@ -11,7 +11,7 @@ file_output_path：  Predict输出结果路径
 engine_config       推理引擎（如vllm）的配置
 
 """
-from transformers import AutoTokenizer
+
 import pickle
 from tqdm import tqdm
 from vllm import LLM, SamplingParams
@@ -34,11 +34,8 @@ def split_inner_list( prompt ):
     return inner_list
 
 def load_model( engine_config,  model_path ):
-    tokenizer = AutoTokenizer.from_pretrained(model_path,trust_remote_code=True)
     sampling_params = SamplingParams( temperature=engine_config["temperature"],
-                                    top_p=engine_config["top_p"],
-                                    max_tokens=1024,
-                                    stop=["<|im_end|>", "<|endoftext|>", "<|im_start|>"],
+                                    top_p=engine_config["top_p"], 
                                     use_beam_search=engine_config["use_beam_search"],
                                     best_of=engine_config["best_of"])
     llm = LLM(
@@ -48,22 +45,7 @@ def load_model( engine_config,  model_path ):
         gpu_memory_utilization=engine_config["gpu_memory_utilization"],
         seed = engine_config["seed"],
     )
-    return sampling_params, llm, tokenizer
-
-def get_input_message( query, tokenizer ):
-    _input = []
-    for line in query:
-        messages = [
-            {"role": "system", "content": "You are a helpful assistant."},
-            {"role": "user", "content": line}
-        ]
-        text = tokenizer.apply_chat_template(
-            messages,
-            tokenize=False,
-            add_generation_prompt=True
-        )
-        _input.append( text  )
-    return _input
+    return sampling_params, llm
 
 
 def vLLMPredict( **configs ):
@@ -72,7 +54,7 @@ def vLLMPredict( **configs ):
     prompt_list = configs["prompt_list"]
     # 加载模型，在对应GPU上启动vllm引擎（在bash脚本中由环境变量指定GPU）
     engine_config = configs["engine_config"]
-    sampling_params, llm, tokenizer = load_model( engine_config,  configs["model_path"] )
+    sampling_params, llm = load_model( engine_config,  configs["model_path"] )
     print(f"No.{ configs['gpu_id'] } LLM Inderence start!")
     # 开始批处理
     part_result = []
@@ -88,8 +70,7 @@ def vLLMPredict( **configs ):
         # 推理：[ [ prompt1, 2, 3], []]
         sub_total = []
         for j in range( len(inner_list) ):
-            prompt_in = get_input_message( inner_list[j], tokenizer )
-            outputs = llm.generate( prompt_in, sampling_params, use_tqdm=False)   # 将输入提示添加到vLLM引擎的等待队列中，并执行vLLM发动机以生成高吞吐量的输出。输出以RequestOutput对象列表的形式返回，其中包括所有输出令牌。
+            outputs = llm.generate(inner_list[j], sampling_params, use_tqdm=False)   # 将输入提示添加到vLLM引擎的等待队列中，并执行vLLM发动机以生成高吞吐量的输出。输出以RequestOutput对象列表的形式返回，其中包括所有输出令牌。
             ret = []
             for output in outputs:
                 ret.append( output.outputs[0].text )

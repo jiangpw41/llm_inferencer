@@ -57,7 +57,7 @@ class Register():
         model_list["local"][model_name] = model_path
         save_data( model_list, self.model_list_path )
     
-    def add_remote_model( self, api_name, api_key, model_list = None ):
+    def add_remote_model( self, api_name, api_key, base_url, model_list = None ):
         "Add a api config to dict"
         config = load_data( self.model_list_path, "yaml")
         if api_name in config["remote"]:
@@ -67,6 +67,7 @@ class Register():
         else:
             config["remote"][api_name] = {
                 "api_key": api_key,
+                "base_url": base_url,
                 "model_list": model_list if model_list else []
             }
             save_data( config, self.model_list_path )

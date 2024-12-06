@@ -12,7 +12,7 @@ reg.add_local_model( "Baichuan2-7B-Chat", "/home/jiangpeiwen2/jiangpeiwen2/works
 reg.add_local_model( "Chinese-Mistral-7B-Instruct-v0.1", "/home/jiangpeiwen2/jiangpeiwen2/workspace/LLMs/Chinese-Mistral-7B-Instruct-v0.1")
 
 # 注册API
-reg.add_remote_model( "NL2GQL", "sk-t4Mv9tJa0ftMCcKqKMAlqJmq3x5Da83Pk4U4Jq2M98C57GZG", 
+reg.add_remote_model( "NL2GQL", "sk-t4Mv9tJa0ftMCcKqKMAlqJmq3x5Da83Pk4U4Jq2M98C57GZG", "https://api.pro365.top/v1" , 
                     model_list=['gpt-3.5-turbo',
                                 'gpt-3.5-turbo-1106',
                                 'gpt-4',
